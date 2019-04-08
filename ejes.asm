@@ -38,7 +38,16 @@ tempDot db 0
 tempSign db 0 
 
 calculateB db 1
+currentCoord dw 0  
+currentScreenCord dw 0 
+isNegativeCurrentCoord db 1 ; para que el se va generando
+ 
+tempCoord dw 0
+tempCoordDot dw 0 
+isNegativeCoord db 1 ; Para el 230
 
+plus dw 0
+plusDot dw 0
 
 
 drawAxes proc        
@@ -135,11 +144,11 @@ endp
 
 pending proc
     
-    mov x1, -3
-    mov y1, -3
+    mov x1, -2
+    mov y1, 4
     
-    mov x2, 5
-    mov y2, 3
+    mov x2, 1
+    mov y2, 2
     
     mov al, x1
     mov ah, x2
@@ -466,7 +475,131 @@ endp
 
 drawStraight proc
     
-    ret
+    mov currentCoord, 230
+    mov currentScreenCord, 0
+    
+    mov al, mDot
+    cbw
+    mov bx, currentCoord
+    mul bx
+    
+    mov al, signM
+    mov ah, isNegativeCurrentCoord
+    
+    test ah, al
+    jnz changeValuePositive 
+    jz changeValueNegative
+    
+    changeValuePositive:
+    
+        mov isNegativeCurrentCoord, 0
+        jmp continuedrawStraight
+    
+    changeValueNegative:
+        mov isNegativeCurrentCoord, 1
+    
+    
+    continuedrawStraight:
+       
+    mov bx, 10
+    div bx
+    mov tempCoordDot, dx 
+    mov bx, ax
+    
+    mov al, m
+    cbw 
+    add bx, ax
+    mov tempCoord, bx
+    
+    mov al, signB
+    mov ah, isNegativeCoord
+    
+    ; Init temas didactivos
+    
+    mov al, 1
+    mov ah, 1 
+    
+    ; End temas didacticos
+    
+    test ah, al
+    jnz addition 
+    jz substraction
+    
+    addition:
+        
+        mov ah, b
+        mov al, bDot 
+        
+        mov bx, tempCoord 
+        mov bh, bl
+        mov cx, tempCoordDot
+        mov bl, cl
+        
+        ; Init temas didactivos
+    
+        mov bh, 138
+        mov bl, 2 
+    
+        ; End temas didacticos
+        
+        add al, bl
+        
+        cmp al, 10
+        jae part2 
+        jmp continueAdd
+        
+        part2:  
+        
+            xor ah, ah
+            mov cl, 10
+            div cl
+            add bh, al
+            mov ah, b
+             
+        
+        continueAdd:
+            add ah, bh
+        
+        jmp finalPoint
+        
+    substraction:
+        jmp finalPoint 
+        
+    finalPoint:
+    
+        cmp isNegativeCurrentCoord, 0
+        je finalCoordSubs
+        jne finalCoordPlus
+        
+        finalCoordSubs:
+                mov dx, 230
+                mov bx, currentCoord
+                sub dx, bx
+                mov cx, dx
+                
+                jmp drawPoint 
+                
+        finalCoordPlus:
+                mov dx, 230
+                mov bx, currentCoord
+                add dx, bx
+                mov cx, dx
+                
+        drawPoint:
+        
+            mov ah, 0
+            mov al, 18
+            int 16 
+        
+            mov dx, currentScreenCord
+            mov al, 0011b
+            mov ah, 0ch
+            int 10h 
+        
+               
+    
+    
+    enddrawStraight: ret
 endp
 
 main:
@@ -494,7 +627,8 @@ main:
     ;div bl
     
     isNotB:
-        call drawAxes
+        ;call drawAxes
+        call drawStraight
 
 ret
 
