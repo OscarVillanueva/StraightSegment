@@ -29,6 +29,16 @@ signY db 0  ; 1 = -1 : 0 = 1
 signX db 0
 signM db 0
 
+b db 0
+bDot db 0
+signB db 0
+
+temp db 0
+tempDot db 0 
+tempSign db 0 
+
+calculateB db 1
+
 
 
 drawAxes proc        
@@ -126,17 +136,30 @@ endp
 pending proc
     
     mov x1, -3
-    mov y1, 3
+    mov y1, -3
     
-    mov x2, 2
-    mov y2, 2
+    mov x2, 5
+    mov y2, 3
+    
+    mov al, x1
+    mov ah, x2
+    
+    cmp al, ah
+    je equalX 
     
     mov al, y1
     mov ah, y2
+    
+    cmp al, ah
+    je equalY
+    
+    ;mov al, y1
+    ;mov ah, y2
     sub ah, al 
     
     js signOfY
     mov bl, ah
+    
     
     continue: 
            
@@ -168,6 +191,35 @@ pending proc
            
            
            jmp sigOfM
+           
+    equalX:
+    
+        call changeNegativeValueOfX
+        
+        mov calculateB, 0
+        
+        mov al, x1
+        mov b, al
+        mov bDot, 0
+        mov m, 0
+        mov mDot, 0
+        
+        jmp return
+            
+    equalY:
+    
+        call changeNegativeValueOfY
+        
+        mov calculateB, 0
+        
+        mov al, y1
+        mov b, al
+        mov bDot, 0
+        mov m, 0
+        mov mDot, 0
+        
+        jmp return        
+                
     
     signOfY: 
            mov al, ah
@@ -190,9 +242,16 @@ pending proc
           mov al, signX
           mov ah, signY
           
-          test ah, al
-          jz notEqual
-          jnz equal
+          cmp ah, 0
+          jne comp
+          
+          cmp al, 0
+          je equal
+          
+          comp: 
+            test ah, al
+            jz notEqual
+            jnz equal
           
           equal: 
                 mov signM, 0
@@ -201,9 +260,214 @@ pending proc
           notEqual: mov signM, 1 
        
     return: ret
+endp 
+
+getB proc
+    
+    ;mov tempSign, 0
+    ;mov x1, -3
+    ;mov m, 0
+    ;mov mDot, 2
+    ;mov signM, 1
+    ;mov y1, 3
+    
+    ;cmp x1, 0
+    ;jl change
+    ;jnl while
+    
+    ;x1 * -1
+    ;change:
+        ;mov tempSign, 1 
+        ;mov al, x1 
+        ;mov dl, -1
+        ;imul dl
+    
+        ;mov x1, al
+        
+    call changeNegativeValueOfX     
+    
+    while:
+    
+        cmp mDot, 0
+        je cero
+    
+        xor ah, ah
+        mov al, x1
+        mov cl, mDot 
+        mul cl  
+         
+        cmp al, 10
+        jge separate
+        
+        mov tempDot, al
+        mov bl, m
+        mov temp, bl 
+          
+        jmp next            
+    
+          
+    
+    separate:
+    
+        xor ah, ah
+        mov dl, 10
+        div dl
+        
+        mov tempDot, ah
+        mov temp, al
+        
+        mov al, x1 
+        xor ah, ah
+        mov dl, m
+        mul dl
+        add al, temp
+        
+        mov temp, al               
+    
+     next:
+     
+        ;cmp y1, 0
+        ;jl changeY1
+        ;jnl verify
+        
+        ;y1 * -1
+        ;changeY1:
+            ;mov signB, 1 
+            ;mov al, y1 
+            ;mov dl, -1
+            ;imul dl
+        
+            ;mov y1, al
+            
+        call changeNegativeValueOfY     
+     
+        verify: 
+            mov bl, y1
+            mov ch, temp
+            mov cl, tempDot
+            
+            mov ah, tempSign
+            mov al, signM 
+            
+            test ah, al
+            jz notEqualSign
+            jnz equalSign
+      
+        equalSign:
+        
+            mov ah, temp
+            mov al, y1
+        
+            cmp ah, al
+            jg mayor
+            jng less
+            je equalValue
+        
+            mayor:
+                mov signB, 1
+                
+                mov ah, tempDot
+                mov bDot, ah
+                
+                mov dl, temp
+                sub dl, y1
+                mov b, dl
+                
+                jmp end
+            
+            equalValue: 
+                mov b, 0
+                mov bDot, 0
+                jmp end
+            
+            less:
+                mov bDot, 0
+                cmp cl, 0
+                jne subs
+                je subsNormal
+                 
+                subs: 
+                    mov dl, 10 
+                    sub dl, cl
+                    mov bDot, dl
+                    sub bl, 1
+                    
+                subsNormal:    
+                    sub bl, temp
+                
+                    mov b, bl
+                
+                jmp end 
+      
+        notEqualSign:
+        
+            cmp signB, 1
+            je less 
+                      
+            mov bDot, cl
+            add bl, temp
+            mov b, bl
+        
+            jmp end
+            
+        cero:
+            cmp m, 0
+            je isCero
+            
+            mov tempDot, 0
+            mov bl, x1
+            mov temp, bl
+            jmp next 
+            
+            isCero:
+                call changeNegativeValueOfY 
+                mov bl, y1 
+                mov b, bl
+                mov bDot, 0                      
+     
+    end: ret
 endp
 
+changeNegativeValueOfY proc
+    
+    cmp y1, 0
+    jl changeY1
+    jnl endchangeNegativeValueOfY
+    
+    ;y1 * -1
+    changeY1:
+        mov signB, 1 
+        mov al, y1 
+        mov dl, -1
+        imul dl
+    
+        mov y1, al
+    
+    endchangeNegativeValueOfY: ret
+endp
 
+changeNegativeValueOfX proc
+    
+    cmp x1, 0
+    jl change
+    jnl endchangeNegativeValueOfX
+    
+    ;x1 * -1
+    change:
+        mov tempSign, 1 
+        mov al, x1 
+        mov dl, -1
+        imul dl
+    
+        mov x1, al 
+        
+    endchangeNegativeValueOfX: ret    
+endp    
+
+drawStraight proc
+    
+    ret
+endp
 
 main:
     
@@ -218,12 +482,19 @@ main:
     ;INT 21H
     
     call pending
+    ;call getB 
+    
+    cmp calculateB, 0
+    je isNotB
+    
+    isB: call getB
     
     ;mov al, 1
     ;mov bl, 2
     ;div bl
     
-    ;call drawAxes
+    isNotB:
+        call drawAxes
 
 ret
 
