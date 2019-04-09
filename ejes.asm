@@ -37,17 +37,19 @@ temp db 0
 tempDot db 0 
 tempSign db 0 
 
+once db 0
+
 calculateB db 1
 currentCoord dw 0  
 currentScreenCord dw 0 
 isNegativeCurrentCoord db 1 ; para que el se va generando
  
-tempCoord dw 0
-tempCoordDot dw 0 
-isNegativeCoord db 1 ; Para el 230
+;tempCoord dw 0
+;tempCoordDot dw 0 
+;isNegativeCoord db 1 ; Para el 230
 
-plus dw 0
-plusDot dw 0
+;plus dw 0
+;plusDot dw 0
 
 
 drawAxes proc        
@@ -144,10 +146,10 @@ endp
 
 pending proc
     
-    mov x1, -2
+    mov x1, -5
     mov y1, 4
     
-    mov x2, 1
+    mov x2, 2
     mov y2, 2
     
     mov al, x1
@@ -473,134 +475,118 @@ changeNegativeValueOfX proc
     endchangeNegativeValueOfX: ret    
 endp    
 
-drawStraight proc
+
+
+dibujar proc
     
     mov currentCoord, 230
     mov currentScreenCord, 0
     
+    newPoint:
     mov al, mDot
     cbw
     mov bx, currentCoord
     mul bx
     
-    mov al, signM
-    mov ah, isNegativeCurrentCoord
+    cmp isNegativeCurrentCoord, 1
+    je multCoordNe
+    jne multCoordPos
     
-    test ah, al
-    jnz changeValuePositive 
-    jz changeValueNegative
+    multCoordNe:
+        mov bx, -1 
+        mul bx
     
-    changeValuePositive:
+    multCoordPos:
+    mov cl, 10
+    div cl
+    mov cl, al ; parte entera
+    mov ch, ah ; parte decimal
     
-        mov isNegativeCurrentCoord, 0
-        jmp continuedrawStraight
+    cmp ch, 5
+    ja addOne  
     
-    changeValueNegative:
-        mov isNegativeCurrentCoord, 1
-    
-    
-    continuedrawStraight:
-       
-    mov bx, 10
-    div bx
-    mov tempCoordDot, dx 
-    mov bx, ax
+    xor ch, ch 
     
     mov al, m
-    cbw 
-    add bx, ax
-    mov tempCoord, bx
+    cbw
+    mov bx, currentCoord
+    mul bx
     
-    mov al, signB
-    mov ah, isNegativeCoord
+    add ax, cx
     
-    ; Init temas didactivos
+    jmp ecuation
     
-    mov al, 1
-    mov ah, 1 
+    addOne: 
+        inc al 
+        mov bl, al
+        mov al, m
+        cbw
+        mul bx ; se queda el resultado en ax
+        
+        mov bx, currentCoord
+        add ax, bx
+        
+        
+        
     
-    ; End temas didacticos
+    ecuation: 
     
-    test ah, al
-    jnz addition 
-    jz substraction
+        cmp signM, 1
+        je multAx
+        jmp y
+        
+    multAx:
     
-    addition:
+        mov bx, -1
+        imul bx 
         
-        mov ah, b
-        mov al, bDot 
-        
-        mov bx, tempCoord 
-        mov bh, bl
-        mov cx, tempCoordDot
-        mov bl, cl
-        
-        ; Init temas didactivos
+    y:  
     
-        mov bh, 138
-        mov bl, 2 
-    
-        ; End temas didacticos
+        mov cx, ax
+        mov al, b
+        cbw
+        add cx, ax
         
-        add al, bl
-        
-        cmp al, 10
-        jae part2 
-        jmp continueAdd
-        
-        part2:  
-        
-            xor ah, ah
-            mov cl, 10
-            div cl
-            add bh, al
-            mov ah, b
-             
-        
-        continueAdd:
-            add ah, bh
-        
-        jmp finalPoint
-        
-    substraction:
-        jmp finalPoint 
-        
-    finalPoint:
-    
-        cmp isNegativeCurrentCoord, 0
-        je finalCoordSubs
-        jne finalCoordPlus
-        
-        finalCoordSubs:
-                mov dx, 230
-                mov bx, currentCoord
-                sub dx, bx
-                mov cx, dx
-                
-                jmp drawPoint 
-                
-        finalCoordPlus:
-                mov dx, 230
-                mov bx, currentCoord
-                add dx, bx
-                mov cx, dx
-                
-        drawPoint:
-        
-            mov ah, 0
-            mov al, 18
-            int 16 
-        
-            mov dx, currentScreenCord
-            mov al, 0011b
-            mov ah, 0ch
-            int 10h 
-        
-               
+        mov ax, -1
+        imul cx
+        mov dx, ax  
+            
+    mov cx, currentScreenCord   ; fila
+    ;mov al, 1100b  ; color
     
     
-    enddrawStraight: ret
-endp
+    
+    ;prueba:
+    
+        mov ah, 0ch
+        int 10h 
+    
+        ;dec cx
+        ;cmp cx, 0
+        ;jne prueba
+        
+      inc currentScreenCord
+      dec currentCoord
+      
+      cmp currentScreenCord, 320
+      ja changeNegative
+      jna noChange
+      
+      changeNegative:
+      
+      
+        cmp once, 0
+        jne noChange  
+        mov isNegativeCurrentCoord, 0
+        mov currentCoord, 628
+        inc once
+      
+        
+      noChange:
+      cmp currentScreenCord, 628
+      jb  newPoint    
+    ret
+    endp
 
 main:
     
@@ -627,8 +613,39 @@ main:
     ;div bl
     
     isNotB:
+            
+        cmp bDot, 5
+        ja addOneB 
+        jbe isNegativeB
+        
+        addOneB:
+            mov al, b
+            inc al 
+            mov b, al
+            
+        isNegativeB:
+        
+            cmp signB, 1
+            jne continueDraw
+            
+        multB: 
+        
+            mov al, b
+            mov bl, -1
+            imul bl
+            mov b, al
+            
+            
+        continueDraw:
+        
+    
+ 
+        mov ah, 0
+        mov al, 18
+        int 16    
+        
         ;call drawAxes
-        call drawStraight
+        call dibujar
 
 ret
 
