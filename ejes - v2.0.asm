@@ -14,8 +14,8 @@ my2: db "Ingresa y2", 0Dh, 0Ah, 24h
 
 
 ;Variables
-MSG2 DB 13,10, ' YOUR STRING IS  :-----> :  $'
-valX1 db 4 dup
+;MSG2 DB 13,10, ' YOUR STRING IS  :-----> :  $'
+;valX1 db 4 dup
 str db  255 dup('$')
 x1 db 0
 x2 db 0
@@ -134,12 +134,14 @@ ask proc
         je breakX1
         
         mov [si], al
+        inc si
         
     continueloopX1:
         loop askForx1 
     
     saveSignX1:
         mov signX, 1
+        lea si, str
         jmp continueloopX1
         
         
@@ -149,7 +151,7 @@ ask proc
         lea si, str
         call atoi
         
-        cmp signX, 1
+        
         
         mov dx, my1
         mov ah, 09h
@@ -158,6 +160,7 @@ ask proc
         mov x1, bl
         lea si, str
         
+        cmp signX, 1
         jne askForY1
         
         mov al, bl
@@ -183,12 +186,14 @@ ask proc
         je breakY1
         
         mov [si], al
+        inc si
         
     continueloopY1:
         loop askForY1 
     
     saveSignY1:
         mov signY, 1
+        lea si, str
         jmp continueloopY1
         
         
@@ -215,6 +220,8 @@ ask proc
         imul bl
         xchg al, bl
         
+        mov y1, bl
+        
         lea si, str
         
     
@@ -233,12 +240,14 @@ ask proc
         je breakX2
         
         mov [si], al
+        inc si
         
     continueloopX2:
         loop askForx2 
     
     saveSignX2:
         mov signX, 1
+        lea si, str
         jmp continueloopX2
         
         
@@ -277,12 +286,14 @@ ask proc
         je breakY2
         
         mov [si], al
+        inc si
         
     continueloopY2:
         loop askForY2 
     
     saveSignY2:
         mov signY, 1
+        lea si, str
         jmp continueloopY2
         
         
@@ -309,7 +320,11 @@ ask proc
         
         lea si, str
     
-endAsk: endp
+endAsk: 
+    mov signX, 0
+    mov signY, 0
+    
+endp
 
 newline proc
 
@@ -355,11 +370,11 @@ endp
 
 pending proc
     
-    ;mov x1, -3
-    ;mov y1, 3
+    ;mov x1, -5
+    ;mov y1, 4
     
-    ;mov x2, 2
-    ;mov y2, 2
+    ;mov x2, 1
+    ;mov y2, -2
     
     mov al, x1
     mov ah, x2
