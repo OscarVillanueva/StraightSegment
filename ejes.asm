@@ -53,9 +53,9 @@ isNegativeCurrentCoord db 1 ; para que el se va generando
 
 
 drawAxes proc        
-    mov ah, 0
-    mov al, 18
-    int 16 
+    ;mov ah, 0
+    ;mov al, 18
+    ;int 16 
     
     
     mov cx, 320 ; columna
@@ -150,7 +150,7 @@ pending proc
     mov y1, 4
     
     mov x2, 2
-    mov y2, 2
+    mov y2, -3
     
     mov al, x1
     mov ah, x2
@@ -479,8 +479,9 @@ endp
 
 dibujar proc
     
-    mov currentCoord, 230
+    mov currentCoord, 320
     mov currentScreenCord, 0
+    mov isNegativeCurrentCoord, 1
     
     newPoint:
     mov al, mDot
@@ -488,15 +489,6 @@ dibujar proc
     mov bx, currentCoord
     mul bx
     
-    cmp isNegativeCurrentCoord, 1
-    je multCoordNe
-    jne multCoordPos
-    
-    multCoordNe:
-        mov bx, -1 
-        mul bx
-    
-    multCoordPos:
     mov cl, 10
     div cl
     mov cl, al ; parte entera
@@ -529,11 +521,14 @@ dibujar proc
         
         
     
-    ecuation: 
+    ecuation:
     
-        cmp signM, 1
-        je multAx
-        jmp y
+        mov bl, signM
+        mov bh, isNegativeCurrentCoord  
+    
+        test bl, bh
+        jz multAx
+        jnz y
         
     multAx:
     
@@ -549,7 +544,12 @@ dibujar proc
         
         mov ax, -1
         imul cx
-        mov dx, ax  
+        mov dx, ax
+        
+        mov ax, 320 
+        add ax, dx
+        mov dx, ax
+          
             
     mov cx, currentScreenCord   ; fila
     ;mov al, 1100b  ; color
@@ -557,16 +557,13 @@ dibujar proc
     
     
     ;prueba:
-    
+        mov al, 0011b; 
         mov ah, 0ch
         int 10h 
     
         ;dec cx
         ;cmp cx, 0
         ;jne prueba
-        
-      inc currentScreenCord
-      dec currentCoord
       
       cmp currentScreenCord, 320
       ja changeNegative
@@ -576,15 +573,32 @@ dibujar proc
       
       
         cmp once, 0
-        jne noChange  
-        mov isNegativeCurrentCoord, 0
-        mov currentCoord, 628
-        inc once
+        je setNewValues
+        ja increment
+        jne noChange
+        
+        
+        
+        setNewValues:  
+            mov isNegativeCurrentCoord, 0
+            mov currentCoord, 1
+            inc once
+            jmp drawNext
+            
+        increment:
+            inc currentCoord
+            inc currentScreenCord
+            jmp drawNext    
       
         
       noChange:
+        inc currentScreenCord
+        dec currentCoord
+      
+      drawNext:
       cmp currentScreenCord, 628
-      jb  newPoint    
+      jb  newPoint
+          
     ret
     endp
 
@@ -601,7 +615,7 @@ main:
     ;INT 21H
     
     call pending
-    ;call getB 
+    call getB 
     
     cmp calculateB, 0
     je isNotB
@@ -644,7 +658,7 @@ main:
         mov al, 18
         int 16    
         
-        ;call drawAxes
+        call drawAxes
         call dibujar
 
 ret
