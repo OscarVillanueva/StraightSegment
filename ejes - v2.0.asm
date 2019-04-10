@@ -51,6 +51,30 @@ isNegativeCurrentCoord db 1 ; para que el se va generando
 ;plus dw 0
 ;plusDot dw 0
 
+atoi proc
+  xor bx,bx   ;BX = 0
+
+atoi_1:
+  lodsb       ;carga byte apuntado por SI en AL e incrementa si
+  cmp al,'0'  ;es numero ascii? [0-9]
+  jb noascii  ;no, salir
+  cmp al,'9'
+  ja noascii  ;no, salir
+
+  sub al,30h  ;ascii '0'=30h, ascii '1'=31h...etc.
+  cbw         ;byte a word
+  push ax
+  mov ax,bx   ;BX tendra el valor final
+  mov cx,10
+  mul cx      ;AX=AX*10
+  mov bx,ax
+  pop ax
+  add bx,ax
+  jmp atoi_1  ;seguir mientras SI apunte a un numero ascii
+  noascii:
+  ret         ;BX tiene el valor final
+atoi endp
+
 
 drawAxes proc        
     ;mov ah, 0
@@ -96,21 +120,206 @@ ask proc
     mov ah, 09h
     int 21h
     
-    mov dx, my1
-    mov ah, 09h
+    lea si, str
+    mov cx, 3
+    
+    askForx1:
+        mov ah, 1
+        int 21h 
+        
+        cmp al, 2Dh
+        je saveSignX1
+        
+        cmp al, 13
+        je breakX1
+        
+        mov [si], al
+        
+    continueloopX1:
+        loop askForx1 
+    
+    saveSignX1:
+        mov signX, 1
+        jmp continueloopX1
+        
+        
+    breakX1:    
+        call newLine
+        
+        lea si, str
+        call atoi
+        
+        cmp signX, 1
+        
+        mov dx, my1
+        mov ah, 09h
+        int 21h
+        
+        mov x1, bl
+        lea si, str
+        
+        jne askForY1
+        
+        mov al, bl
+        mov bl, -1
+        imul bl
+        xchg al, bl
+        
+        mov x1, bl
+        lea si, str    
+                            
+    
+    askForY1:
+    
+        mov signX, 0
+    
+        mov ah, 1
+        int 21h 
+        
+        cmp al, 2Dh
+        je saveSignY1
+        
+        cmp al, 13
+        je breakY1
+        
+        mov [si], al
+        
+    continueloopY1:
+        loop askForY1 
+    
+    saveSignY1:
+        mov signY, 1
+        jmp continueloopY1
+        
+        
+    breakY1:    
+        call newLine
+        
+        lea si, str
+        call atoi
+        
+        cmp signY, 1
+        
+        mov dx, mx2
+        mov ah, 09h
+        int 21h
+        
+        mov y1, bl
+        
+        lea si, str
+        
+        jne askForX2
+        
+        mov al, bl
+        mov bl, -1
+        imul bl
+        xchg al, bl
+        
+        lea si, str
+        
+    
+    
+    askForX2:
+    
+        mov signY, 0
+    
+        mov ah, 1
+        int 21h 
+        
+        cmp al, 2Dh
+        je saveSignX2
+        
+        cmp al, 13
+        je breakX2
+        
+        mov [si], al
+        
+    continueloopX2:
+        loop askForx2 
+    
+    saveSignX2:
+        mov signX, 1
+        jmp continueloopX2
+        
+        
+    breakX2:    
+        call newLine
+        
+        lea si, str
+        call atoi
+        
+        cmp signX, 1
+        
+        mov dx, my2
+        mov ah, 09h
+        int 21h
+        
+        mov x2, bl
+        
+        jne askForY2
+        
+        mov al, bl
+        mov bl, -1
+        imul bl
+        xchg al, bl
+        
+        mov x2, bl
+        
+    askForY2:    
+    
+        mov ah, 1
+        int 21h 
+        
+        cmp al, 2Dh
+        je saveSignY2
+        
+        cmp al, 13
+        je breakY2
+        
+        mov [si], al
+        
+    continueloopY2:
+        loop askForY2 
+    
+    saveSignY2:
+        mov signY, 1
+        jmp continueloopY2
+        
+        
+    breakY2:    
+        call newLine
+        
+        lea si, str
+        call atoi
+        
+        cmp signY, 1
+        
+        mov y2, bl
+        
+        lea si, str 
+        
+        jne endAsk
+        
+        mov al, bl
+        mov bl, -1
+        imul bl
+        xchg al, bl
+        
+        mov y2, bl
+        
+        lea si, str
+    
+endAsk: endp
+
+newline proc
+
+    mov dl, 10
+    mov ah, 02h
+    int 21h
+    mov dl, 13
+    mov ah, 02h
     int 21h
     
-    mov dx, mx2
-    mov ah, 09h
-    int 21h
-    
-    mov dx, my2
-    mov ah, 09h
-    int 21h      
-            
-    lea si,str        
-    
-    call read
     
     ret
     
@@ -146,11 +355,11 @@ endp
 
 pending proc
     
-    mov x1, 1
-    mov y1, 1
+    ;mov x1, -3
+    ;mov y1, 3
     
-    mov x2, -3
-    mov y2, -3
+    ;mov x2, 2
+    ;mov y2, 2
     
     mov al, x1
     mov ah, x2
@@ -577,7 +786,7 @@ dibujar proc
 
 main:
     
-    ;call ask 
+    call ask 
     
     ;LEA DX,MSG2
     ;MOV AH,09H
