@@ -146,10 +146,10 @@ endp
 
 pending proc
     
-    mov x1, -5
-    mov y1, 4
+    mov x1, 1
+    mov y1, -2
     
-    mov x2, 2
+    mov x2, -3
     mov y2, -3
     
     mov al, x1
@@ -360,9 +360,9 @@ getB proc
             mov ah, tempSign
             mov al, signM 
             
-            test ah, al
-            jz notEqualSign
-            jnz equalSign
+            cmp ah, al
+            jne notEqualSign
+            je equalSign
       
         equalSign:
         
@@ -549,6 +549,12 @@ dibujar proc
         mov ax, 320 
         add ax, dx
         mov dx, ax
+        
+        cmp dx, 480
+        jg endDibujar
+        
+        cmp dx, 0
+        jl endDibujar
           
             
     mov cx, currentScreenCord   ; fila
@@ -599,7 +605,7 @@ dibujar proc
       cmp currentScreenCord, 628
       jb  newPoint
           
-    ret
+    endDibujar: ret
     endp
 
 main:
