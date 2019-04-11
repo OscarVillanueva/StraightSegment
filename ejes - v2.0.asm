@@ -2,54 +2,53 @@
 ; You may customize this and other start-up templates; 
 ; The location of this template is c:\emu8086\inc\0_com_template.txt
 
-org 100h
+org 100h ; Indicamos que el programa seguira la estructura .com
 
-jmp main 
+jmp main ; Hacemos un salto incodicional a main para ingresar al programa
 
-mx1: db "Ingresa x1", 0Dh, 0Ah, 24h 
-my1: db "Ingresa y1", 0Dh, 0Ah, 24h
+mx1: db "Ingresa x1", 0Dh, 0Ah, 24h ; Etiqueta que sirve para solicitar X1
+my1: db "Ingresa y1", 0Dh, 0Ah, 24h ; Etiqueta que sirve para solicitar Y1
 
-mx2: db "Ingresa x2", 0Dh, 0Ah, 24h 
-my2: db "Ingresa y2", 0Dh, 0Ah, 24h
+mx2: db "Ingresa x2", 0Dh, 0Ah, 24h ; Etiqueta que sirve para solicitar X2
+my2: db "Ingresa y2", 0Dh, 0Ah, 24h ; Etiqueta que sirve para solicitar Y2
+
+; Etiqueta para mostrar mensaje de bienvenida
+initMessage: db "Bienvenido, para graficar una recta", 0Dh, 0Ah, 24h 
+
+; Etiqueta para indicar como ingresar las coordenadas  
+initMessage2: db "Ingrese las coordenadas, de entre -10 a 10", 0Dh, 0Ah, 24h 
 
 
-;Variables
-;MSG2 DB 13,10, ' YOUR STRING IS  :-----> :  $'
-;valX1 db 4 dup
-str db  255 dup('$')
-x1 db 0
-x2 db 0
-y1 db 0
-y2 db 0
- 
-m db 0
-mDot db 0
+str db  255 dup('$')  ; Almacenara el dato que el usuario va ingresando por teclado
+x1 db 0               ; Almacenara el valor de X1
+x2 db 0               ; Almacenara el valor de Y2
+y1 db 0               ; Almacenara el valor de X1
+y2 db 0               ; Almacenara el valor de Y2
 
-signY db 0  ; 1 = -1 : 0 = 1
-signX db 0
-signM db 0
+; m y mDot almaceneran el valor de la pendiente, ejemplo: 1.2                     
+m db 0                ; Almacenara la parte entera de la pendiente (1)
+mDot db 0             ; Almacenara la parte flotante de la pendiente (2)
 
-b db 0
-bDot db 0
-signB db 0
+; 1 = -1 : 0 = 1
+signY db 0            ; Almacenara el valor de del signo de X
+signX db 0            ; Almacenara el valor de del signo de Y
+signM db 0            ; Almacenara el valor de del signo de M (pendiente)
 
-temp db 0
-tempDot db 0 
-tempSign db 0 
+b db 0                ; Almacenara la parte entera de la variable B de la formula y = mx + b
+bDot db 0             ; Almacenara la parte decimal de la variable B
+signB db 0            ; Almacenara el signo de B
 
-once db 0
+temp db 0             ; Servira como apuntador auxiliar guardando una parte entera
+tempDot db 0          ; Servira como apuntador auxiliar guardando una parte decimal 
+tempSign db 0         ; Servira como apuntador auxiliar guardando el signo
 
-calculateB db 1
-currentCoord dw 0  
-currentScreenCord dw 0 
-isNegativeCurrentCoord db 1 ; para que el se va generando
- 
-;tempCoord dw 0
-;tempCoordDot dw 0 
-;isNegativeCoord db 1 ; Para el 230
+once db 0             ; Acumulador, para verificar si la recta ya paso por el cero
 
-;plus dw 0
-;plusDot dw 0
+calculateB db 1       ; Sirve para verificar si es necesario calcular la B
+currentCoord dw 0     ; Coordenada actual en relacion a X y Y del plano
+currentScreenCord dw 0 ; Coordenada actual en relacion a la pantalla 
+isNegativeCurrentCoord db 1 ; Para verificar en que parte (positiva o negativa) estamos de eje x
+
 
 atoi proc
   xor bx,bx   ;BX = 0
@@ -75,6 +74,7 @@ atoi_1:
   ret         ;BX tiene el valor final
 atoi endp
 
+;Este metodo sirve para graficar los ejes X y Y
 
 drawAxes proc        
     ;mov ah, 0
@@ -82,37 +82,37 @@ drawAxes proc
     ;int 16 
     
     
-    mov cx, 320 ; columna
-    mov dx, 10   ; fila
-    mov al, 15  ; color        
+    mov cx, 320 ; indicamos la columna para comenzar a graficar el eje Y (mitad de la pantalla horizontal)
+    mov dx, 10  ; indicamos la fila para comenzar a graficar el eje Y (iniciamos en el pixel 10)
+    mov al, 15  ; indicamos el color del pixel a dibujar
         
     u2:
     
-        mov ah, 0ch
-        int 10h 
+        mov ah, 0ch ; cargamos la funcion, para dibujar un pixel en pantalla
+        int 10h     ; ejecutamos la funcion
         
-        inc dx
+        inc dx      ; Incrementamos dx para bajar un punto 
         
-        cmp dx, 470
-        jbe u2    
+        cmp dx, 470 ; Verificamos que no hemos llegado al final de la pantalla de forma vertical
+        jbe u2      ; Si aun es menor la fila a al final (470), brincamos a u2 para dibujar el siguiente punto
     
-    xor dx, dx
-    xor cx, cx
-    mov cx, 628 ; columna
-    mov dx, 240 ; row
+    xor dx, dx      ; Limpiamos dx
+    xor cx, cx      ; Limpiamos cx
+    mov cx, 628     ; indicamos la columna para dibujar el eje X (mitad de la pantalla vertical)
+    mov dx, 240     ; indicamos la fila para dibujar el eje X (iniciamos en el pixel 240), pixel mas a la derecha
     
     u1: 
-        mov ah, 0ch
-        int 10h
+        mov ah, 0ch ; cargamos la funcion, para dibujar un pixel en pantalla
+        int 10h     ; ejecutamos la funcion
         
-        dec cx
+        dec cx      ; decrementamos la columna para dibujar el siguiente punto a la izquierda
         
-        cmp cx, 10
-        jae u1
+        cmp cx, 10  ; verificamso que si hemos llegado al pixel 10
+        jae u1      ; si aun estamos por arriba del 10 dibujams el siguiente punto
               
-    ret      
-    
-endp
+    ret             ; regresamos a donde fue llamado
+                    
+endp                ; fin procedimiento
 
 ask proc 
         
@@ -800,16 +800,16 @@ dibujar proc
     endp
 
 main:
-    
-    call ask 
-    
-    ;LEA DX,MSG2
-    ;MOV AH,09H
-    ;INT 21H
 
-    ;LEA DX,str
-    ;MOV AH,09H
-    ;INT 21H
+    lea dx,initMessage
+    mov ah,09h
+    int 21h
+    
+    lea dx,initMessage2
+    mov ah,09h
+    int 21h
+    
+    call ask
     
     call pending
     call getB 
@@ -819,15 +819,7 @@ main:
     
     isB: call getB
     
-    ;mov al, 1
-    ;mov bl, 2
-    ;div bl
-    
-    isNotB:
-            
-            
-            
-        continueDraw:
+    isNotB:     
  
         mov ah, 0
         mov al, 18
