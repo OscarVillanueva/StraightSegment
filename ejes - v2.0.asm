@@ -74,7 +74,7 @@ atoi_1:
   ret         ;BX tiene el valor final
 atoi endp
 
-;Este metodo sirve para graficar los ejes X y Y
+;Este procedimiento sirve para graficar los ejes X y Y
 
 drawAxes proc        
     ;mov ah, 0
@@ -114,215 +114,220 @@ drawAxes proc
                     
 endp                ; fin procedimiento
 
+; Este procedimiento sirve para solicitarle al usuario las coordenadas, por separado
+
 ask proc 
         
-    mov dx, mx1
-    mov ah, 09h
-    int 21h
+    mov dx, mx1     ; cargamos el mensaje para solicitar X1
+    mov ah, 09h     ; cargamos la funcion para imprimir
+    int 21h         ; imprimimos el mensaje
     
-    lea si, str
-    mov cx, 3
+    lea si, str     ; cargamos la direccion efectiva del apuntador que guardara lo ingresado por teclado
+    mov cx, 3       ; cargamos 3 en cx para limitar a solo 3 caracteres por entrada
     
     askForx1:
-        mov ah, 1
-        int 21h 
+        mov ah, 1   ; cargamos la funcion echo para leer de teclado
+        int 21h     ; ejecutamos la funcion 
         
-        cmp al, 2Dh
-        je saveSignX1
+        cmp al, 2Dh ; Verificamos si lo ingresado es un guion indicando el signo
+        je saveSignX1 ; Si es un signo bricamos  
         
-        cmp al, 13
-        je breakX1
+        cmp al, 13    ; Verificamos si lo ingresado es enter
+        je breakX1    ; si es asi salimos el ciclo
         
-        mov [si], al
-        inc si
+        mov [si], al  ; Cargamos el nuevo caracter en el buffer
+        inc si        ; incremtamos el apuntador
         
     continueloopX1:
         loop askForx1 
     
-    saveSignX1:
-        mov signX, 1
-        lea si, str
-        jmp continueloopX1
+    saveSignX1:        ; Etiqueta para almacenar el signo de X1
+        mov signX, 1   ; Actualizamos el valor de signX para indicar que X1 es negativo 
+        lea si, str    ; regresamos el apuntador al inicio del buffer 
+        jmp continueloopX1 ; regresamos al ciclo
         
         
-    breakX1:    
-        call newLine
+    breakX1:           ; Etiqueta para romper el ciclo
+        call newLine   ; imprimimos una nueva linea
         
-        lea si, str
-        call atoi
+        lea si, str    ; retornamos el apuntador al inicio del buffer
+        call atoi      ; convertimos el numero ingresado de ASCII a Entero
         
         
         
-        mov dx, my1
-        mov ah, 09h
-        int 21h
+        mov dx, my1    ; cargamos el mensaje para solicitar X1 
+        mov ah, 09h    ; cargamos la funcion para imprimir
+        int 21h        ; imprimimos el mensaje
         
-        mov x1, bl
-        lea si, str
+        mov x1, bl     ; guardamos el valor ingresado 
+        lea si, str    ; regresamos el apuntador al inicio del buffer
         
-        cmp signX, 1
-        jne askForY1
+        mov cx, 3      ; cargamos 3 en cx para el siguiente ciclo
         
-        mov al, bl
-        mov bl, -1
-        imul bl
-        xchg al, bl
+        cmp signX, 1   ; Verificamos si se ingreso un signo
+        jne askForY1   ; si no es preguntamos por Y1
         
-        mov x1, bl
-        lea si, str    
+        mov al, bl     ; movemos el nuevo valor a al
+        mov bl, -1     ; cargamos un -1 en bl para hacer negativa la nueva x1
+        imul bl        ; multiplicamos considerando el signo
+        xchg al, bl    ; intercambiamos el valor entre al y bl
+        
+        mov x1, bl     ; guardamos el resultado 
+        lea si, str    ; regresamos el apuntador al inicio del buffer
                             
     
     askForY1:
     
-        mov signX, 0
+        mov signX, 0   ; cambiamos el valor del signo
     
-        mov ah, 1
-        int 21h 
+        mov ah, 1      ; cargamos la funcion echo para leer de teclado
+        int 21h        ; ejecutamos la funcion 
         
-        cmp al, 2Dh
-        je saveSignY1
+        cmp al, 2Dh    ; Verificamos si lo ingresado es un guion indicando el signo
+        je saveSignY1  ; Si es un signo bricamos 
         
-        cmp al, 13
-        je breakY1
+        cmp al, 13     ; Verificamos si lo ingresado es enter
+        je breakY1     ; si es asi salimos el ciclo
         
-        mov [si], al
-        inc si
+        mov [si], al   ; guardamos el nuevo valor
+        inc si         ; incrementamos el apuntador
         
     continueloopY1:
         loop askForY1 
     
-    saveSignY1:
-        mov signY, 1
-        lea si, str
-        jmp continueloopY1
+    saveSignY1:             ; Etiqueta para almacenar el signo de X1
+        mov signY, 1        ; cambiamos el valor del signY
+        lea si, str         ; regresamos el apuntador al inicio del buffer
+        jmp continueloopY1  ; regresamos al ciclo
         
         
     breakY1:    
-        call newLine
+        call newLine        ; imprimimos un salto de linea
         
-        lea si, str
-        call atoi
+        lea si, str         ; regresamos el apuntador al inicio del buffer
+        call atoi           ; convertimos el valor de ASCII a Entero
         
-        cmp signY, 1
+        mov cx, 3           ; cargamos 3 para el nuevo ciclo
+         
+        mov dx, mx2         ; cargamos el siguiente mensaje para solicitar x2
+        mov ah, 09h         ; cargamos la funcion para imprimir
+        int 21h             ; imprimimos el mensaje
         
-        mov dx, mx2
-        mov ah, 09h
-        int 21h
+        mov y1, bl          ; Movemos el nuevo valor a y1
         
-        mov y1, bl
+        lea si, str         ; regresamos el apuntador al inicio del buffer
         
-        lea si, str
+        cmp signY, 1        ; comparamos si Y es negativa
+        jne askForX2        ; si no es igual saltamos para solicitar Y1
         
-        jne askForX2
+        mov al, bl          ; cargamos el valor de y1 a al
+        mov bl, -1          ; cargamos un -1
+        imul bl             ; multiplicamos considerando el nuevo signo para hacer negativa a y1
+        xchg al, bl         ; intercambiamos el valor 
         
-        mov al, bl
-        mov bl, -1
-        imul bl
-        xchg al, bl
+        mov y1, bl          ; guardamos y1
         
-        mov y1, bl
-        
-        lea si, str
+        lea si, str         ; regresamos el apuntador al inicio del buffer
         
     
     
     askForX2:
     
-        mov signY, 0
+        mov signY, 0        ; reiniciamos el valor del signo de y
     
-        mov ah, 1
-        int 21h 
+        mov ah, 1           ; cargamos la funcion echo
+        int 21h             ; ejecutamos la funcion echo
         
-        cmp al, 2Dh
-        je saveSignX2
+        cmp al, 2Dh         ; verificamos si lo ingresado es un signo
+        je saveSignX2       ; si es un signo saltamos para guardarlo
         
-        cmp al, 13
-        je breakX2
+        cmp al, 13          ; verificamos si es un enter
+        je breakX2          ; si es asi rompemos el ciclo
         
-        mov [si], al
-        inc si
+        mov [si], al        ; guardamos el valor en el buffer
+        inc si              ; incrementamos el valor del apuntador
         
     continueloopX2:
         loop askForx2 
     
-    saveSignX2:
-        mov signX, 1
-        lea si, str
-        jmp continueloopX2
+    saveSignX2:             ; Etiqueta para almacenar el signo
+        mov signX, 1        ; actualizamos el valor del signo de x 
+        lea si, str         ; regresamos el apuntador al inicio del buffer
+        jmp continueloopX2  ; regresamos al ciclo
         
         
     breakX2:    
-        call newLine
+        call newLine        ; imprimimos un salto de linea
         
-        lea si, str
-        call atoi
+        lea si, str         ; regresamos el apuntador al inicio del buffer
+        call atoi           ; convertimos el valor de ASCII a entero
         
-        cmp signX, 1
+        mov cx, 3           ; reiniciamos el cilo
         
-        mov dx, my2
-        mov ah, 09h
-        int 21h
+        mov dx, my2         ; imprimimos el mensaje para y2
+        mov ah, 09h         ; cargamos la funcion para imprimir
+        int 21h             ; imprimimos el mensaje
         
-        mov x2, bl
+        mov x2, bl          ; guardamos el valor de x2
         
-        jne askForY2
+        cmp signX, 1        ; comparamos si hay signo 
+        jne askForY2        ; si no brincamos para solicitar x2
         
-        mov al, bl
-        mov bl, -1
-        imul bl
-        xchg al, bl
+        mov al, bl          ; cambiamos el valor de x2 a bl
+        mov bl, -1          ; cargamos un -1 para hacer negativa a x2
+        imul bl             ; multiplicamos considerando el signo
+        xchg al, bl         ; intercambiamos valores
         
-        mov x2, bl
+        mov x2, bl          ; guardamos el valor el valor de x2
         
     askForY2:    
     
-        mov ah, 1
-        int 21h 
+        mov ah, 1           ; cargamos la funcion para leer de teclado
+        int 21h             ; ejecutamos la funcion
         
-        cmp al, 2Dh
-        je saveSignY2
+        cmp al, 2Dh         ; verificamos si es un guion
+        je saveSignY2       ; si es un guion saltamos
         
-        cmp al, 13
-        je breakY2
+        cmp al, 13          ; comparamos para saber si se ingreso un enter
+        je breakY2          ; si es un enter rompemos el ciclo
         
-        mov [si], al
-        inc si
+        mov [si], al        ; cargamos el valor en el buffer
+        inc si              ; incrementamos el apuntador
         
     continueloopY2:
         loop askForY2 
-    
-    saveSignY2:
-        mov signY, 1
-        lea si, str
-        jmp continueloopY2
+                             
+    saveSignY2:             ; Etiqueta para almancenar el signo de y2
+        mov signY, 1        ; actualizamos el valor del signo
+        lea si, str         ; regresamos el apuntador al inicio del buffer
+        jmp continueloopY2  ; regresamos al ciclo
         
         
     breakY2:    
-        call newLine
+        call newLine        ; Imprimimos una nueva linea
         
-        lea si, str
-        call atoi
+        lea si, str         ; regresamos el apuntador al inicio del buffer
+        call atoi           ; convertimos el valor de ASCII a Entero
         
-        cmp signY, 1
+        mov y2, bl          ; guardamos el nuevo valor de y2
         
-        mov y2, bl
+        lea si, str         ; regresamos el apuntador al inicio del buffer  
         
-        lea si, str 
+        cmp signY, 1        ; verifiamos si la y2 ingresada es negativa
+        jne endAsk          ; si no es salimos del procedimiento
         
-        jne endAsk
+        mov al, bl          ; guardamos el nuevo valor en al
+        mov bl, -1          ; cargamos un -1 para hacer negativa a y2
+        imul bl             ; multiplicamos considierando el signo
+        xchg al, bl         ; intercambiamos el valor 
         
-        mov al, bl
-        mov bl, -1
-        imul bl
-        xchg al, bl
+        mov y2, bl          ; guardamos el valor en y2
         
-        mov y2, bl
-        
-        lea si, str
+        lea si, str         ; regresamso el apuntador  al inicio del buffer
     
 endAsk: 
-    mov signX, 0
-    mov signY, 0
+    mov signX, 0            ; reiniciamos el valor del signo de X
+    mov signY, 0            ; reiniciamos el valor del signo de Y
     
 endp
 
