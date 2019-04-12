@@ -76,11 +76,7 @@ atoi endp
 
 ;Este procedimiento sirve para graficar los ejes X y Y
 
-drawAxes proc        
-    ;mov ah, 0
-    ;mov al, 18
-    ;int 16 
-    
+drawAxes proc 
     
     mov cx, 320 ; indicamos la columna para comenzar a graficar el eje Y (mitad de la pantalla horizontal)
     mov dx, 10  ; indicamos la fila para comenzar a graficar el eje Y (iniciamos en el pixel 10)
@@ -407,6 +403,7 @@ pending proc
         call changeNegativeValueOfX ; procedimiento para cambiar el valor de x1
         
         mov calculateB, 0           ; actualizamos el valor de B para no calcular el b, ya que no se presentan cambios en x
+        mov signX, 1                ; incamos que por medio de signX que es una linea paralela al eje y
         
         mov al, x1                  ; cargamos el valor de x1
         mov b, al                   ; guardamos el valor de x1 en B 
@@ -739,7 +736,32 @@ dibujar proc
         jb  newPoint                   ; si aun esta por debajo brincamos a dibujar el siguiente pixel
           
     endDibujar: ret
-    endp 
+    endp
+    
+drawParallelY proc
+    
+    mov al, x2      ; cargamos el valor de x2
+    cbw             ; cambiamos de 8 bit a 16 bits el valor de ax
+    
+    mov cx, 320     ; cargamos la posicion del eje y en relacion al plano
+    add cx, ax      ; le sumamos el valor de x2
+    
+    
+    mov dx, 0       ; indicamos la fila para comenzar a graficar el eje paralelo a y (iniciamos en el pixel 0)
+    mov al, 0011b   ; indicamos el color del pixel a dibujar
+        
+    dpy:
+    
+        mov ah, 0ch ; cargamos la funcion, para dibujar un pixel en pantalla
+        int 10h     ; ejecutamos la funcion
+        
+        inc dx      ; Incrementamos dx para bajar un punto 
+        
+        cmp dx, 480 ; Verificamos que no hemos llegado al final de la pantalla de forma vertical
+        jbe dpy
+    
+    ret
+endp         
     
 ; Etiqueta haciendo referencia al metodo principal en una LAN (Lenguaje de alto nivel)    
 
@@ -766,10 +788,17 @@ main:
                                       
         mov ah, 0                      ; indicamos la funcion 0 para entrar en modo grafico
         mov al, 18                     ; indicamos el tamanio de la pantalla
-        int 16                         ; ejecutamos y entramos en el modo grafico 
+        int 16                         ; ejecutamos y entramos en el modo grafico
         
         call drawAxes                  ; dibujamos los ejes
-        call dibujar                   ; dibujamos la recta
+        
+        cmp signX, 0
+        je normal
+        jne parallel 
+        
+                                       
+        normal: call dibujar           ; dibujamos la recta 
+        parallel: call drawParallelY   ; dibujamos una recta paralela a y
 
 ret
 
