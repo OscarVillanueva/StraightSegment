@@ -329,104 +329,74 @@ endAsk:
     mov signX, 0            ; reiniciamos el valor del signo de X
     mov signY, 0            ; reiniciamos el valor del signo de Y
     
-endp
+endp 
+
+; Este procedimiento sirve para imprimir un salto de linea \n
 
 newline proc
 
-    mov dl, 10
-    mov ah, 02h
-    int 21h
-    mov dl, 13
-    mov ah, 02h
-    int 21h
+    mov dl, 10              ; cargamos \r (regresamos el cursor al inicio de la linea) 
+    mov ah, 02h             ; cargamos la funcion 02h para actualizar el posicion del cursor
+    int 21h                 ; ejecutamos la funcion
+    
+    mov dl, 13              ; cargamos \n (cargamos un 13 para hacer el salto de linea) 
+    mov ah, 02h             ; cargamos la funcion 02h para actualizar el posicion del cursor
+    int 21h                 ; ejecutamos la funcion 
     
     
     ret
     
-endp
-   
-read proc
-    
-    mov cx, 4
-    
-    init:
-          
-          mov ah,01h  
-          INT 21H
-          
-          CMP AL, 0Dh ;;;;;;;;;;;cariage return = 0dh   
-          JE terminate 
-          
-          MOV [SI],AL
-          INC SI
-            
-          cmp cx, 0
-          je terminate  
-          
-          dec cx
-          
-          jmp init
-    
-    terminate:
-    ret
-         
 endp 
 
+; Procedimiento para calcular la pendiente 
+; para cualcular la formula m = (y2 - y1) / (x2 - x1)
 
 pending proc
     
-    ;mov x1, -5
-    ;mov y1, 4
+    mov al, x1    ; cargamos el valor de x1
+    mov ah, x2    ; cargamos el valor de x2
     
-    ;mov x2, 1
-    ;mov y2, -2
+    cmp al, ah    ; verificamos si son iguales para verificar si es una linea recta 
+    je equalX     ; si son iguales saltamos a equal X
     
-    mov al, x1
-    mov ah, x2
+    mov al, y1    ; cargamos el valor de y1
+    mov ah, y2    ; cargamos el valor de y2
     
-    cmp al, ah
-    je equalX 
+    cmp al, ah    ; comparamos los valores
+    je equalY     ; si son iguales saltamos
     
-    mov al, y1
-    mov ah, y2
+    sub ah, al    ; restamos y2 - y1 
     
-    cmp al, ah
-    je equalY
-    
-    ;mov al, y1
-    ;mov ah, y2
-    sub ah, al 
-    
-    js signOfY
-    mov bl, ah
+    js signOfY    ; verificamos si la resta nos dio un valor negativo
+    mov bl, ah    ; cargamos el resultado de la resta en bl
     
     
     continue: 
            
-           mov al, x1
-           mov ah, x2
-           sub ah, al
+           mov al, x1           ; cargamos el valor de x1 
+           mov ah, x2           ; cargamos el valor de x2
+           sub ah, al           ; hacemos la resta 
            
-           js signOfX
-           mov dl, ah 
+           js signOfX           ; verificamos si nos dio como resultado un valor negativo
+           mov dl, ah           ; cargamos el resultado los en dl
              
            calc: 
-                   ;xchg bl, dl 
-                   mov al, bl
                    
-                   xor ah, ah
+                   mov al, bl   ; cargamos el resultado de y2 - y1 en al
                    
-                   div dl    ; residuo ah resultado al
-                   mov bh, ah
+                   xor ah, ah   ; limpiamos ah
                    
-                   mov m, al
+                   div dl       ; divimos residuo ah resultado al (y2 - y1) / (x2 - x1)
+                   mov bh, ah   ; cargamos el residuo en bh
                    
-                   xor ax, ax
-                   mov al, 10
-                   mul bh
+                   mov m, al    ; guardamos la parte entera en m
                    
-                   div dl
-                   mov mDot, al
+                   xor ax, ax   ; limpiamos ax
+                   mov al, 10   ; cargamos un 10 
+                   mul bh       ; multiplicamos el residuo por 10 para sacar el decimal 
+                   
+                   div dl       ; dividimos por el resultado de (x2 - x1)
+                   mov mDot, al ; guardamos el resultado en mDot
            
            
            
@@ -434,212 +404,162 @@ pending proc
            
     equalX:
     
-        call changeNegativeValueOfX
+        call changeNegativeValueOfX ; procedimiento para cambiar el valor de x1
         
-        mov calculateB, 0
+        mov calculateB, 0           ; actualizamos el valor de B para no calcular el b, ya que no se presentan cambios en x
         
-        mov al, x1
-        mov b, al
+        mov al, x1                  ; cargamos el valor de x1
+        mov b, al                   ; guardamos el valor de x1 en B 
         mov bDot, 0
         mov m, 0
         mov mDot, 0
-        
+                                    ; salimos del procedimiento
         jmp return
             
     equalY:
     
-        call changeNegativeValueOfY
+        call changeNegativeValueOfY ; procedimiento para cambiar el valor de y1
         
-        mov calculateB, 0
+        mov calculateB, 0           ; actualizamos el valor de B para no calcular el b, ya que no se presentan cambios en x
         
-        mov al, y1
-        mov b, al
+        mov al, y1                  ; cargamos el valor de y1 en al
+        mov b, al                   ; guardamos en b el valor de y1 
         mov bDot, 0
         mov m, 0
         mov mDot, 0
         
-        jmp return        
+        jmp return                  ; salimos del procedimineto 
                 
     
-    signOfY: 
-           mov al, ah
-           mov cl, -1
-           imul cl 
-           mov bl, al
-           mov signY, 1
-           jmp continue
-           
-    signOfX: 
-           mov al, ah
-           mov cl, -1
-           imul cl 
-           mov dl, al
-           mov signX, 1
-           jmp calc       
+    signOfY:                        ; Esta etiqueta sirve para cambiar el valor de y2 - y1 de negativo a positivo
+           mov al, ah               ; cargamos el resultado de la resta en al
+           mov cl, -1               ; cargamos en cl -1
+           imul cl                  ; multiplicamos considerando el signo
+           mov bl, al               ; movemos el resultado en bl
+           mov signY, 1             ; actualizamos el valor de signY para indicar que el resultado es negativo
+           jmp continue             ; regresamos a continue
+                                    
+    signOfX:                        ; Esta etiqueta sirve para cambiar el valor de x2 - x1 de negativo a positivo
+           mov al, ah               ; cargamos el resultado de la resta en al
+           mov cl, -1               ; cargamos en cl -1
+           imul cl                  ; multiplicamos considerando el signo
+           mov dl, al               ; movemos el resultado en bl
+           mov signX, 1             ; actualizamos el valor de signX para indicar que el resultado es negativo
+           jmp calc                 ; regresamos a calc
             
-    sigOfM:
+    sigOfM:                         ; esta etiqueta sirve para indicar el vlaor final 
     
-          mov al, signX
-          mov ah, signY
+          mov al, signX             ; cargamos el signo de X
+          mov ah, signY             ; cargamos el signo de Y
           
-          cmp ah, 0
-          jne comp
+          cmp ah, 0                 ; verificamos si ah (signX) es cero
+          jne comp                  ; si no es cero nos vamos a comp
           
-          cmp al, 0
-          je equal
+          cmp al, 0                 ; verificamos si ah (signY) es cero 
+          je equal                  ; si son iguales nos vamos a iguales
           
-          comp: 
-            test ah, al
-            jz notEqual
+          comp:                     ; verificamos si son iguales 
+            test ah, al             ; si no son iguales nos vamos a notEqual
+            jz notEqual             ; si son iguales a equal
             jnz equal
           
-          equal: 
-                mov signM, 0
-                jmp return
+          equal:                    
+                mov signM, 0        ; indicamos que el signo de la pendiente es 0 (positiva)
+                jmp return          ; salimos del procedimiento
           
-          notEqual: mov signM, 1 
+          notEqual: mov signM, 1    ; indicamos que el signo de la pendiente es 1 (negativa)
        
     return: ret
-endp 
+endp
+
+; Procedimeinto para calulcar el valor de la equacion y = mx + b 
 
 getB proc
-    
-    ;mov tempSign, 0
-    ;mov x1, -3
-    ;mov m, 0
-    ;mov mDot, 2
-    ;mov signM, 1
-    ;mov y1, 3
-    
-    ;cmp x1, 0
-    ;jl change
-    ;jnl while
-    
-    ;x1 * -1
-    ;change:
-        ;mov tempSign, 1 
-        ;mov al, x1 
-        ;mov dl, -1
-        ;imul dl
-    
-        ;mov x1, al
         
-    call changeNegativeValueOfX     
+    call changeNegativeValueOfX   ; Procedimiento para cambiar el valor de x de negativo a positivo  
     
     while:
     
-        ;cmp mDot, 0
-        ;je cero
-    
-        xor ah, ah
-        mov al, x1
-        mov cl, mDot 
-        mul cl  
+        xor ah, ah                ; limpiamos el registro ah
+        mov al, x1                ; cargamos el valor de x1 
+        mov cl, mDot              ; cargamos el valor decimal de m (mDot)
+        mul cl                    ; multiplicamos 
          
-        cmp al, 10
-        jge separate
+        cmp al, 10                ; si el resultado de la division es mayor a 10 
+        jge separate              ; si es superior saltamos a separate
         
-        mov tempDot, al
-        mov bl, m
-        mov temp, bl
- 
-        ;jmp next            
-    
+        mov tempDot, al           ; guardamos el resultado de la multiplicacion 
+        mov bl, m                 ; cargamos el valor de m (parte entera en) 
+        mov temp, bl              ; guardamos el valor de m en nuestra variable auxiliar
+                                   
           
     
     separate:
     
-        xor ah, ah
-        mov dl, 10
-        div dl
+        xor ah, ah                ; limipiamos el registro ah  
+        mov dl, 10                ; cargamos un 10 en dl
+        div dl                    ; dividimos el valor el resultado de la multiplicacion mDot * x1
         
-        mov tempDot, ah
-        mov temp, al
+        mov tempDot, ah           ; guardamos el residuo en tempDot
+        mov temp, al              ; guardamos el resultado en temp
         
-        mov al, x1 
-        xor ah, ah
-        mov dl, m
-        mul dl
+        mov al, x1                ; cargamos el valor de x1
+        xor ah, ah                ; limpiamos el valor del registro de ah
+        mov dl, m                 ; cargamos el valor de la parte entera de la pendiente
+        mul dl                    ; hacemos la multiplicacion
         add al, temp
         
-        mov temp, al               
+        mov temp, al              ; y le sumamos el resultado al resultado de la division previa 
     
-     next:
-     
-        ;cmp y1, 0
-        ;jl changeY1
-        ;jnl verify
+     next:                        ; esta etiqueta nos sirve para redondear el valor de B
         
-        ;y1 * -1
-        ;changeY1:
-            ;mov signB, 1 
-            ;mov al, y1 
-            ;mov dl, -1
-            ;imul dl
-        
-            ;mov y1, al
-        
-        cmp tempDot, 5
-        ja addOneB 
-        jbe isNegativeB
+        cmp tempDot, 5            ; si es valor decimal es mayor a 5
+        ja addOneB                ; ei es mayor brincamos a addOneB
+        jbe isNegativeB           ; si no es brincamos a isNegativeB
         
         addOneB:
-            mov al, temp
-            inc al 
-            mov b, al
+            mov al, temp          ; cargamos la parte entera de la b temporal
+            inc al                ; y le agregamos uno 
+            mov b, al             ; cargamos el valor final en b
             
         isNegativeB:
         
-            cmp tempSign, 1
-            jne verify
+            cmp tempSign, 1       ; verificamos si tempSign si es 1 (este valor cambia en changeNegativeValueOfX)
+            jne verify            ; si no esta en 1 saltamos a verify
             
         multB: 
         
-            mov al, temp
-            mov bl, -1
-            imul bl
-            mov b, al
+            mov al, temp          ; cargamos el valor 
+            mov bl, -1            ; cargamos un -1
+            imul bl               ; multiplicamos considuerando el signo
+            mov b, al             ; guardamos el resultado en b
             
-        
-            
-        ;call changeNegativeValueOfY     
-     
+                                     
         verify:
         
-            mov ah, y1
-            mov al, b
-            add ah, al
-            mov b, ah
+            mov ah, y1            ; cargamos el valor de y1 
+            mov al, b             ; cargamos el valor de b
+            add ah, al            ; hacemos la suma
+            mov b, ah             ; cargamos en B el resultado
             
             jmp end
             
-        cero:
-            cmp m, 0
-            je isCero
-            
-            mov tempDot, 0
-            mov bl, x1
-            mov temp, bl
-            jmp next 
-            
-            isCero:
-                call changeNegativeValueOfY 
-                mov bl, y1 
-                mov b, bl
-                mov bDot, 0                      
+                              
      
     end: ret
 endp
 
+; Este procedimiento sirve para cambiar el valor de y1 de negativo a positivo
+
 changeNegativeValueOfY proc
     
-    cmp y1, 0
-    jl changeY1
-    jnl endchangeNegativeValueOfY
+    cmp y1, 0                       ; comprobamos si es un valor negativo
+    jl changeY1                     ; si es negativo brincamos a changeY1
+    jnl endchangeNegativeValueOfY   ; si no  salimos el procedimiento
     
     ;y1 * -1
     changeY1:
-        mov signB, 1 
+        mov signB, 1                ; cambiamos el valor de signB a uno para indicar que se hizo el cambio
         mov al, y1 
         mov dl, -1
         imul dl
