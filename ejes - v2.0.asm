@@ -739,36 +739,37 @@ dibujar proc
         jb  newPoint                   ; si aun esta por debajo brincamos a dibujar el siguiente pixel
           
     endDibujar: ret
-    endp
+    endp 
+    
+; Etiqueta haciendo referencia al metodo principal en una LAN (Lenguaje de alto nivel)    
 
 main:
 
-    lea dx,initMessage
-    mov ah,09h
-    int 21h
+    lea dx,initMessage                 ; Cargamos el mensaje de bienvenida 
+    mov ah,09h                         ; cargamos la funcion para imprimir
+    int 21h                            ; ejecutamos la funcion
     
-    lea dx,initMessage2
-    mov ah,09h
-    int 21h
+    lea dx,initMessage2                ; Cargamos el mensaje de instrucciones 
+    mov ah,09h                         ; cargamos la funcion para imprimir
+    int 21h                            ; ejecutamos la funcion
     
-    call ask
+    call ask                           ; mandamos llamar el procedimiento para pedir las coordenadas
     
-    call pending
-    call getB 
+    call pending                       ; mandamos llamar el procedimiento para calcular la pendiente
     
-    cmp calculateB, 0
-    je isNotB
+    cmp calculateB, 0                  ; comprobamos si necesario calcular la b
+    je isNotB                          ; si es cero nos vamos a isNotB
     
-    isB: call getB
+    isB: call getB                     ; mandamos llamar el procedimiento para calcular el valor de b
     
     isNotB:     
- 
-        mov ah, 0
-        mov al, 18
-        int 16    
+                                      
+        mov ah, 0                      ; indicamos la funcion 0 para entrar en modo grafico
+        mov al, 18                     ; indicamos el tamanio de la pantalla
+        int 16                         ; ejecutamos y entramos en el modo grafico 
         
-        call drawAxes
-        call dibujar
+        call drawAxes                  ; dibujamos los ejes
+        call dibujar                   ; dibujamos la recta
 
 ret
 
