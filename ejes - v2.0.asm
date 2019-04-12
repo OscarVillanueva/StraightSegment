@@ -568,12 +568,14 @@ changeNegativeValueOfY proc
     
     endchangeNegativeValueOfY: ret
 endp
-
+    
+; Este procedimiento sirve para cambiar el valor de x1 de negativo a positivo    
+    
 changeNegativeValueOfX proc
     
-    cmp x1, 0
-    jl change
-    jnl endchangeNegativeValueOfX
+    cmp x1, 0                      ; comprobamos si es un valor negativo
+    jl change                      ; si es negativo brincamos a changeX1
+    jnl endchangeNegativeValueOfX  ; si no  salimos el procedimiento
     
     ;x1 * -1
     change:
@@ -587,139 +589,154 @@ changeNegativeValueOfX proc
     endchangeNegativeValueOfX: ret    
 endp    
 
+; Este procedimiento sirve para dibujar los puntos de la recta en pantalla 
+; sustituyendo los valores previos en la formula y = mx + b 
 
+; Pantalla
+; ------------------------------------------------------------
+; |                             0px                          |
+; |                                                          |
+; |                                                          |
+; |                                                          |
+; |                                                          |
+; |                                                          |
+; |                                                          |
+; |                                                          |
+; |                                                          |
+; |-321                         0                         321|
+; |0px                                                  628px|
+; |                                                          |
+; |                                                          |
+; |                                                          |
+; |                                                          |
+; |                                                          |
+; |                                                          |
+; |                                                          |
+; |                                                          |
+; |                                                          |
+; |                                                          |
+; |                             480px                        |
+; |----------------------------------------------------------|
 
 dibujar proc
     
-    mov currentCoord, 321
-    mov currentScreenCord, 0
-    mov isNegativeCurrentCoord, 1
+    mov currentCoord, 321          ; coordenada actual en relacion al plano
+    mov currentScreenCord, 0       ; coordenada actual en relacion a la pantalla
+    mov isNegativeCurrentCoord, 1  ; marcamos que vamos por el lado negativo de x
     
     newPoint:
-    mov al, mDot
-    cbw
-    mov bx, currentCoord
-    mul bx
+    mov al, mDot                   ; cargamos la parte decimal de la pendiente
+    cbw                            ; cambiamos de 8 bit a 16 bits el valor de ax
+    mov bx, currentCoord           ; cargamos el valor de currentCoord
+    mul bx                         ; multiplicamos por el la parte decimal
     
-    mov cl, 10
-    div cl
-    mov cl, al ; parte entera
-    mov ch, ah ; parte decimal
+    mov cl, 10                     ; cargamos un 10 en cl
+    div cl                         ; dividimos por 10 el resultado de la multiplicacion
+    mov cl, al                     ; parte entera de la division (resultado)
+    mov ch, ah                     ; parte decimal de la division (residuo)
     
-    cmp ch, 5
-    ja addOne  
+    cmp ch, 5                      ; verificamos si el punto decimal es mayor a 5 para redondear
+    ja addOne                      ; si es mayor brincamos a addOne
     
-    xor ch, ch 
+    xor ch, ch                     ; limpiamos la parte alta de ch
     
-    mov al, m
-    cbw
-    mov bx, currentCoord
-    mul bx
+    mov al, m                      ; cargamos la parte entera de la pendiente 
+    cbw                            ; cambiamos de 8 bit a 16 bits el valor de ax 
+    mov bx, currentCoord           ; cargamos el valor de la posicion en x en bx
+    mul bx                         ; multiplicamos por ax
     
-    add ax, cx
+    add ax, cx                     ; sumamos el acarreo o el resultado de la multiplicacion previa de currentCoord con mDot
     
-    jmp ecuation
+    jmp ecuation                   ; saltamos a la sustitucion
     
     addOne: 
-        inc al 
-        mov bl, al
-        mov cl, al
-        mov al, m
-        xor bh, bh
-        cbw
-        mul bx ; se queda el resultado en ax
-        xor ch, ch
-        mov bx, currentCoord
-        add ax, cx
+        inc al                     ; aumentamos en una unidad la parte entera por el redondeo
+        mov bl, al                 ; movemos la parte entera a bl
+        mov cl, al                 ; movemos la parte entera a bl
+        mov al, m                  ; cargamos en al la parte entera de m
+        xor bh, bh                 ; limpiamos la parte alta del registro bx
+        cbw                        ; cambiamos de 8 bit a 16 bits el valor de ax
+        mul bx                     ; se queda el resultado en ax
+        xor ch, ch                 ; limpiamos la parte alta del registro cx
+        mov bx, currentCoord       ; cargamos el valor de la coordenada actual en bx
+        add ax, cx                 ; sumamos el incremento al resultado de la multiplicacion 
         
         
         
     
     ecuation:
     
-        mov bl, signM
-        mov bh, isNegativeCurrentCoord  
+        mov bl, signM                  ; movemos en bl el signo de la pendiente 
+        mov bh, isNegativeCurrentCoord ; movemos en bh el signo de la coordenada actual 
         
-        ;test bl, bh
-        
-        cmp bl, bh
-        jne multAx
-        je y
+        cmp bl, bh                     ; comparamos si son iguales
+        jne multAx                     ; si no son iguales nos vamos a multAx
+        je y                           ; si son iguales brincamos a y
         
     multAx:
-    
-        mov bx, -1
-        imul bx 
+                                       
+        mov bx, -1                     ; cargamos en bx un -1
+        imul bx                        ; multiplicamos considerando el signo
         
     y:  
     
-        mov cx, ax
-        mov al, b
-        cbw
-        add cx, ax
+        mov cx, ax                     ; movemos a cx el resultado de m * x
+        mov al, b                      ; movemos a al el valor de b
+        cbw                            ; cambiamos de 8 bit a 16 bits el valor de ax
+        add cx, ax                     ; hacemos la suma mx + b
         
-        mov ax, -1
-        imul cx
-        mov dx, ax
+        mov ax, -1                     ; movemos a ax -1
+        imul cx                        ; multiplicamos -(mx + b)
+        mov dx, ax                     ; movemos el resultado a dx
+                                        
+        mov ax, 240                    ; cargamos la posicion del eje y en relacion a la pantalla en ax
+        add ax, dx                     ; sumamos 240 + -(mx + b)
+        mov dx, ax                     ; movemos a dx (fila) 
         
-        mov ax, 240 
-        add ax, dx
-        mov dx, ax
+        cmp dx, 480                    ; si la fila es mayor 480
+        jg noChange                    ; si es superior brincamos a noChange
         
-        cmp dx, 480
-        jg noChange
-        
-        cmp dx, 0
-        jl noChange
+        cmp dx, 0                      ; si la fila es menor a 0
+        jl noChange                    ; brincamos a noChange
           
             
-    mov cx, currentScreenCord   ; fila
-    ;mov al, 1100b  ; color
-    
-    
-    
-    ;prueba:
-        mov al, 0011b; 
-        mov ah, 0ch
-        int 10h 
-    
-        ;dec cx
-        ;cmp cx, 0
-        ;jne prueba
+    mov cx, currentScreenCord          ; cargamos en cx (fila) la coordenada Actual de la pantalla
+     
+
+    mov al, 0011b                      ; indicamos el color cyan en el sistema de colores del 8086 
+    mov ah, 0ch                        ; cargamos la funcion para dibujar un pixel
+    int 10h                            ; ejecutamos
       
-      cmp currentScreenCord, 320
-      ja changeNegative
-      jna noChange
-      
-      changeNegative:
-      
-      
-        cmp once, 0
-        je setNewValues
-        ja increment
-        jne noChange
+    cmp currentScreenCord, 320         ; comprobamos si currentScreenCord cruzo el eje Y
+    ja changeNegative                  ; si ya cruzo brincamos a changeNegative
+    jna noChange                       ; si aun no cruza nos vamos a noChange
+  
+    changeNegative:
+  
+        cmp once, 0                    ; verificamos que sea la primera vez que llegamos aqui
+        je setNewValues                ; si es la primera vez brincamos a setNewValues
+        ja increment                   ; si es no es la primera vez pero ya a llegado al menos una vez brincamos a increment
+        jne noChange                   ; si no nos vamos a noChange
+
+    setNewValues:  
+        mov isNegativeCurrentCoord, 0  ; indicamos que ya estamos en el lado positivos de las x positivas
+        mov currentCoord, 1            ; cambiamos la coordenada actual a 1 
+        inc once                       ; aumentamos one para indicar que ya se llego una vez
+        jmp drawNext                   ; brincamos a drawNext
         
-        
-        
-        setNewValues:  
-            mov isNegativeCurrentCoord, 0
-            mov currentCoord, 1
-            inc once
-            jmp drawNext
-            
-        increment:
-            inc currentCoord
-            inc currentScreenCord
-            jmp drawNext    
-      
-        
-      noChange:
-        inc currentScreenCord
-        dec currentCoord
-      
-      drawNext:
-      cmp currentScreenCord, 628
-      jb  newPoint
+    increment:
+        inc currentCoord               ; incrementamos en uno la coordenada Actual en relacion al plano
+        inc currentScreenCord          ; incrementamos en uno la coordenada Actual en relacion a la pantalla
+        jmp drawNext                   ; brincamos a drawNext
+  
+    
+    noChange:
+        inc currentScreenCord          ; incrementamos en uno la coordenada Actual en relacion a la pantalla 
+        dec currentCoord               ; decrementamos en uno la coordenada actual en relacion al plano
+  
+    drawNext:
+        cmp currentScreenCord, 628     ; comprobamos si currentScreenCord es 628
+        jb  newPoint                   ; si aun esta por debajo brincamos a dibujar el siguiente pixel
           
     endDibujar: ret
     endp
